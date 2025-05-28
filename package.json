@@ -10,7 +10,7 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@twa-dev/sdk": "twa-dev/SDK"
+    "@twa-dev/sdk": "^1.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
