@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useWebApp } from "@telegram-apps/web-app-react";
+import WebApp from "@twa-dev/sdk";
 
 export default function App() {
-  const webApp = useWebApp();
   const [activeTab, setActiveTab] = useState("recommendations");
   const [showAddReviewModal, setShowAddReviewModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
