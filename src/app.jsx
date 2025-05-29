@@ -171,42 +171,26 @@ export default function App() {
     { id: 2, title: "Хочу посетить" }
   ]);
 
-  // Геолокация
-  const [location, setLocation] = useState(null);
-  const [nearbyPlaces, setNearbyPlaces] = useState([]);
-
+  // Инициализация Telegram WebApp
   useEffect(() => {
-    if (!webApp) return;
+    if (!WebApp) return;
 
-    webApp.ready();
-    webApp.setHeaderTitle("Локатор");
-
-    // Запрашиваем геолокацию
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          setLocation({ lat, lon });
-          setNearbyPlaces(allPlaces); // имитируем поиск рядом
-        },
-        () => setNearbyPlaces(allPlaces)
-      );
-    }
+    WebApp.ready();
+    WebApp.setHeaderTitle("Локатор");
 
     // Тема
-    if (webApp.colorScheme === "dark") setDarkMode(true);
-    webApp.onEvent("themeChanged", () => {
-      setDarkMode(webApp.themeParams.bg_color !== "#ffffff");
+    if (WebApp.colorScheme === "dark") setDarkMode(true);
+    WebApp.onEvent("themeChanged", () => {
+      setDarkMode(WebApp.themeParams.bg_color !== "#ffffff");
     });
 
     // MainButton
-    webApp.MainButton.setText("Добавить отзыв");
-    webApp.MainButton.onClick(() => setShowAddReviewModal(true));
-    webApp.MainButton.show();
+    WebApp.MainButton.setText("Добавить отзыв");
+    WebApp.MainButton.onClick(() => setShowAddReviewModal(true));
+    WebApp.MainButton.show();
 
     return () => {
-      webApp.MainButton.hide();
+      WebApp.MainButton.hide();
     };
   }, []);
 
@@ -223,40 +207,50 @@ export default function App() {
       return;
     }
 
-    webApp.CloudStorage.setItem(
-      `review_${reviewData.placeId}`,
-      JSON.stringify({
-        ...reviewData,
-        date: new Date().toLocaleDateString(),
-        user: currentUser.name
-      }),
-      (err) => {
-        if (!err) {
-          webApp.HapticFeedback.notificationOccurred("success");
-          alert(`Отзыв на "${selectedPlace.name}" сохранён`);
+    if (WebApp && WebApp.CloudStorage) {
+      WebApp.CloudStorage.setItem(
+        `review_${reviewData.placeId}`,
+        JSON.stringify({
+          ...reviewData,
+          date: new Date().toLocaleDateString(),
+          user: currentUser.name
+        }),
+        (err) => {
+          if (!err) {
+            WebApp.HapticFeedback.notificationOccurred("success");
+            alert(`Отзыв на "${selectedPlace.name}" сохранён`);
+          }
         }
-      }
-    );
+      );
+    } else {
+      alert("Сохранение недоступно в этом браузере");
+    }
 
     setShowAddReviewModal(false);
   };
 
-  // Профиль друга
+  // Переход к профилю друга
   if (selectedUserId) {
     const friend = friends.find(f => f.id === selectedUserId);
 
     return (
       <div className="p-4">
+        {/* Кнопка назад */}
         <button onClick={() => setSelectedUserId(null)} className="text-[#B9F61F] mb-4">← Назад</button>
+
+        {/* Аватар и имя */}
         <h2 className="text-xl font-bold text-center">{friend.name}</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 text-center">@{friend.username}</p>
         <img src={friend.avatar} alt="Avatar" className="w-20 h-20 rounded-full mx-auto my-4" />
+
+        {/* Статистика */}
         <div className="grid grid-cols-3 gap-4 mt-4 text-center">
           <div><div className="font-bold">{friend.reviewsCount}</div><div className="text-sm text-gray-500">Отзывы</div></div>
           <div><div className="font-bold">{friend.favoritesCount}</div><div className="text-sm text-gray-500">Избранное</div></div>
           <div><div className="font-bold">{friend.friendsCount}</div><div className="text-sm text-gray-500">Друзья</div></div>
         </div>
 
+        {/* Последние отзывы друга */}
         <h3 className="mt-6 font-semibold">Последние отзывы</h3>
         {friend.reviews.map(r => (
           <div key={r.id} className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow mt-2">
@@ -278,6 +272,7 @@ export default function App() {
           </div>
         ))}
 
+        {/* Кнопка выхода */}
         <button
           onClick={() => setSelectedUserId(null)}
           className="mt-6 w-full bg-[#B9F61F] hover:bg-green-500 text-black dark:text-white py-2 rounded-lg"
@@ -289,9 +284,9 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"} font-sans`}>
+    <div className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"} font-sans transition-colors duration-300`}>
       {/* Header */}
-      <header className={`${darkMode ? "bg-gray-800" : "bg-white"} shadow-sm p-4 flex justify-center items-center sticky top-0 z-10`}>
+      <header className={`${darkMode ? "bg-gray-800" : "bg-white"} shadow-sm p-4 flex justify-center items-center sticky top-0 z-10 transition-colors`}>
         <h1 className="text-xl font-bold">Локатор</h1>
       </header>
 
@@ -303,7 +298,7 @@ export default function App() {
 
             {/* Feed List */}
             {feedItems.map(item => (
-              <div key={item.id} className={`${darkMode ? "bg-gray-800" : "bg-white"} mb-6 rounded-xl overflow-hidden shadow-sm`}>
+              <div key={item.id} className={`${darkMode ? "bg-gray-800" : "bg-white"} mb-6 rounded-xl overflow-hidden shadow-sm transition-colors`}>
                 <img src={item.place.image} alt={item.place.name} className="w-full h-40 object-cover" />
                 <div className="p-4">
                   <p className="font-medium text-gray-700 dark:text-gray-300">{item.user} порекомендовал(а):</p>
@@ -324,7 +319,7 @@ export default function App() {
             {/* Floating Button */}
             <button
               onClick={() => setShowAddReviewModal(true)}
-              className="fixed bottom-20 right-6 z-20 w-14 h-14 bg-[#B9F61F] hover:bg-green-500 text-black dark:text-white rounded-full flex items-center justify-center shadow-lg"
+              className="fixed bottom-20 right-6 z-20 w-14 h-14 bg-[#B9F61F] hover:bg-green-500 text-black dark:text-white rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95"
             >
               +
             </button>
@@ -339,7 +334,7 @@ export default function App() {
                 <button
                   key={cat}
                   onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1 rounded-full whitespace-nowrap ${categoryFilter === cat ? "bg-[#B9F61F] text-black" : "bg-gray-200 text-gray-700"} rounded-full`}
+                  className={`px-3 py-1 rounded-full whitespace-nowrap ${categoryFilter === cat ? "bg-[#B9F61F] text-black" : "bg-gray-200 text-gray-700"} transition`}
                 >
                   {cat}
                 </button>
@@ -349,11 +344,11 @@ export default function App() {
               {allPlaces
                 .filter(place => categoryFilter === "Все" || place.type === categoryFilter)
                 .map(place => (
-                  <div key={place.id} className={`${darkMode ? "bg-gray-800" : "bg-white"} rounded-xl p-4 shadow-sm flex items-center`}>
+                  <div key={place.id} className={`${darkMode ? "bg-gray-800" : "bg-white"} rounded-xl p-4 shadow-sm flex items-center transition-colors`}>
                     <img src={place.image} alt={place.name} className="w-16 h-16 rounded-lg object-cover mr-3" />
                     <div>
                       <h3 className="font-medium">{place.name}</h3>
-                      <p className="text-xs text-gray-500">{place.type}, {place.location}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{place.type}, {place.location}</p>
                     </div>
                   </div>
                 ))
@@ -368,7 +363,7 @@ export default function App() {
             {friends.map(friend => (
               <div
                 key={friend.id}
-                className={`${darkMode ? "bg-gray-800" : "bg-white"} rounded-xl p-4 shadow-sm flex items-center justify-between cursor-pointer`}
+                className={`${darkMode ? "bg-gray-800" : "bg-white"} rounded-xl p-4 shadow-sm flex items-center justify-between cursor-pointer mb-4 transition-colors`}
                 onClick={() => setSelectedUserId(friend.id)}
               >
                 <div className="flex items-center">
@@ -386,7 +381,7 @@ export default function App() {
         {activeTab === "profile" && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">Профиль</h2>
-            <div className={`${darkMode ? "bg-gray-800" : "bg-white"} rounded-xl p-6 shadow-sm text-center`}>
+            <div className={`${darkMode ? "bg-gray-800" : "bg-white"} rounded-xl p-6 shadow-sm text-center transition-colors`}>
               <img src={currentUser.avatar} alt="Profile" className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-[#B9F61F]" />
               <h2 className="text-xl font-bold">{currentUser.name}</h2>
               <p className="text-gray-500">@{currentUser.username}</p>
@@ -414,9 +409,7 @@ export default function App() {
             <label className="block mb-2 text-sm font-medium">Выберите место</label>
             <select
               value={reviewData.placeId}
-              onChange={(e) =>
-                setReviewData({ ...reviewData, placeId: e.target.value })
-              }
+              onChange={(e) => setReviewData({ ...reviewData, placeId: e.target.value })}
               className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4"
             >
               <option>-- Выберите место --</option>
@@ -479,7 +472,7 @@ export default function App() {
               className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4"
             ></textarea>
 
-            {/* Выбор списка избранного */}
+            {/* Избранное */}
             <label className="block mb-2 text-sm font-medium">Добавить в список</label>
             <ul className="space-y-2 mb-4">
               {favoriteLists.map(list => (
@@ -532,7 +525,7 @@ export default function App() {
             key={tab.tab}
             onClick={() => {
               setActiveTab(tab.tab);
-              webApp.HapticFeedback.impactOccurred("light");
+              if (WebApp?.HapticFeedback) WebApp.HapticFeedback.impactOccurred("light");
             }}
             className="flex flex-col items-center"
           >
